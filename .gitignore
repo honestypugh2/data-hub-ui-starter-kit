@@ -48,6 +48,7 @@ venv.bak/
 
 # Azure
 .azure/
+local.settings.json
 
 # Audio files (temporary recordings)
 *.wav

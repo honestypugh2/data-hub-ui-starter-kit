@@ -421,13 +421,54 @@ Before deploying to production, validate the following:
 
 ---
 
+## Monitoring — Key Functions
+
+When debugging in the Azure Portal, monitor these functions via **Log stream** on each Function App:
+
+**UI API Function App:**
+
+| Function Name | Role | Trigger Type |
+|---|---|---|
+| `upload_initiate` | Validate upload request, generate write SAS URL, create metadata | HTTP (`POST /api/upload`) |
+| `list_images` | List all images for the caller's agency | HTTP (`GET /api/images`) |
+| `get_image_detail` | Get image detail with preview URL and tags | HTTP (`GET /api/images/{id}`) |
+| `delete_image` | Delete image, output, and metadata | HTTP (`DELETE /api/images/{id}`) |
+| `get_image_tags` | Return AI-generated tags (JSON) | HTTP (`GET /api/images/{id}/tags`) |
+
+**Existing Processing Pipeline (`<your-processing-function-app>`):**
+
+| Function Name | Role | Trigger Type |
+|---|---|---|
+| `start_orchestrator_on_blob` | Entry point — initiates Durable Functions orchestration when blob uploaded | Blob Trigger |
+| `process_blob` | Routes the file to the appropriate processing function | Orchestrator Activity |
+| `callAoaiMultiModal` | Calls Azure OpenAI for image processing with prompt | Orchestrator Activity |
+| `writeToBlob` | Writes JSON output to the `gold` container | Orchestrator Activity |
+
+---
+
+## Out of Scope (Phase 1)
+
+The following were intentionally excluded from Phase 1 and are candidates for future work:
+
+- Gallery UX improvements (thumbnail grid, infinite scroll)
+- Admin dashboard with cross-agency visibility
+- Full-text search or advanced filtering
+- Batch/multi-image upload
+- WebSocket or push notifications (polling only)
+- Enterprise audit logging
+- Accessibility hardening (WCAG 2.1 AA)
+- Centralized workflow management
+- Custom AI processing prompts per agency
+
+---
+
 ## Support & Next Steps
 
 ### Documentation References
+- **Getting Started**: See [getting-started.md](getting-started.md)
 - **Architecture Details**: See [architecture-ui.md](architecture-ui.md)
 - **Security Considerations**: See [security.md](security.md)
-- **UI Component Guide**: See [ui-handover.md](ui-handover.md)
-- **Full Technical Handover**: See [phase1-handover.md](phase1-handover.md)
+- **Infrastructure Deployment**: See [infra/README.md](../infra/README.md)
 
 ### Recommended Next Steps
 

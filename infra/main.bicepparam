@@ -26,4 +26,4 @@ param staticWebAppSku = 'Free'
 // param location = 'westus2'
 
 // Optional: override the unique suffix for resource names
-// param uniqueSuffix = '43mspjkjywpoq'
+// param uniqueSuffix = '<your-unique-suffix>'

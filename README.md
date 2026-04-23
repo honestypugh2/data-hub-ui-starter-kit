@@ -30,6 +30,30 @@ A web application starter for uploading images and viewing AI-generated tags. Us
 | Auth | Microsoft Entra ID (Azure AD) | JWT validation, agency derived from user claims |
 | Infra | Network-isolated (ZTA), private endpoints, Bastion VM | Zero-trust architecture |
 
+## Demo Walkthrough
+
+The included demo mode runs without Azure credentials. Here's what the UI looks like:
+
+**1. Sign In** — Users authenticate with organization credentials (simulated in demo mode).
+
+![Sign In](images/demo_ui_login.png)
+
+**2. Upload & Gallery** — Upload a JPG/PNG image and see it appear in the gallery with status tracking.
+
+![Upload and Gallery](images/demo_ui_upload_image.png)
+
+**3. Pending** — Newly uploaded images show a "Pending" status while the AI pipeline processes them.
+
+![Pending Image](images/demo_ui_pending_image.png)
+
+**4. Completed** — Once processed, the detail view shows AI-generated tags (scene summary, detections, confidence scores).
+
+![Completed Image with Tags](images/demo_ui_completed_image.png)
+
+**5. Delete** — Users can remove their own images and all associated data.
+
+![Delete Confirmation](images/demo_ui_delete_image.png)
+
 ## How It Works
 
 1. User signs in via Entra ID (MFA enforced). Their agency is auto-identified from JWT claims.
@@ -198,6 +222,16 @@ The app opens at `http://localhost:3000`.
 | Storage Account | `<your-storage-account>` |
 | Function App | `<your-processing-function-app>` |
 | Resource Group | `<your-resource-group>` |
+
+## Documentation
+
+| Document | Purpose |
+|---|---|
+| [docs/getting-started.md](docs/getting-started.md) | Prerequisites, demo quick start, 5-step production setup, deployment guide |
+| [docs/architecture-ui.md](docs/architecture-ui.md) | Component stack, data flows, API blueprint, blob layout |
+| [docs/security.md](docs/security.md) | Threat model, JWT validation, SAS token security, OWASP alignment |
+| [docs/starter-codebase.md](docs/starter-codebase.md) | Blueprint disclaimer, customization guide, testing checklists, monitoring |
+| [infra/README.md](infra/README.md) | Bicep module reference, parameters, network isolation, cost estimate |
 | AI Foundry | `<your-ai-foundry-resource>` |
 | App Configuration | `<your-app-configuration-resource>` |
 

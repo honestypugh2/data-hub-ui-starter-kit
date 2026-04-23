@@ -5,10 +5,10 @@ from datetime import datetime, timedelta, timezone
 
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import (
+    BlobSasPermissions,
     BlobServiceClient,
-    ContainerSasPermissions,
-    generate_blob_sas,
     UserDelegationKey,
+    generate_blob_sas,
 )
 
 from config import settings
@@ -109,7 +109,7 @@ def generate_read_sas_url(container_name: str, blob_name: str, expiry_minutes: i
             container_name=container_name,
             blob_name=blob_name,
             user_delegation_key=delegation_key,
-            permission=ContainerSasPermissions(read=True),
+            permission=BlobSasPermissions(read=True),
             expiry=datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes),
         )
     except Exception:

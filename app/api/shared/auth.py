@@ -7,7 +7,7 @@ from typing import Optional
 
 import azure.functions as func
 import httpx
-from jose import JWTError, jwt
+from jose import JWTError, jwt  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,7 @@ async def _get_signing_keys() -> dict:
         jwks_resp.raise_for_status()
         _jwks_cache = jwks_resp.json()
 
+    assert _jwks_cache is not None
     return _jwks_cache
 
 

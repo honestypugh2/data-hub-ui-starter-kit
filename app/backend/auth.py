@@ -6,7 +6,7 @@ from typing import Optional
 import httpx
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+from jose import JWTError, jwt  # type: ignore[import-untyped]
 
 from config import settings
 
@@ -34,6 +34,7 @@ async def _get_signing_keys() -> dict:
         jwks_resp.raise_for_status()
         _jwks_cache = jwks_resp.json()
 
+    assert _jwks_cache is not None
     return _jwks_cache
 
 

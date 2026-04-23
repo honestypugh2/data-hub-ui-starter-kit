@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 
 from azure.storage.blob import (
     BlobSasPermissions,
-    ContainerSasPermissions,
     UserDelegationKey,
     generate_blob_sas,
 )
@@ -33,7 +32,7 @@ def generate_read_sas_url(
             container_name=container_name,
             blob_name=blob_name,
             user_delegation_key=delegation_key,
-            permission=ContainerSasPermissions(read=True),
+            permission=BlobSasPermissions(read=True),
             expiry=datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes),
         )
     except Exception:
