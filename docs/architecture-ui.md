@@ -107,6 +107,8 @@ Each module follows the pattern: `__init__.py` re-exports `bp` from `init.py`.
 
 ## Data Flow — Upload Pipeline
 
+![Upload Sequence Diagram](../images/starter_sequence_diag.png)
+
 ```
 1. UI: user picks file
    ├─ Client-side validation (type ∈ {jpeg, png}, size ≤ 20 MB)

@@ -4,6 +4,8 @@ A web application starter for uploading images and viewing AI-generated tags. Us
 
 ## Architecture
 
+![Architecture Diagram](images/starter_arch_modified.png)
+
 ```
 ┌──────────────┐        ┌────────────────────┐       ┌─────────────────────────┐
 │  React SPA   │──JWT──▶│  Azure Functions    │──────▶│  Azure Blob Storage     │

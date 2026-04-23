@@ -52,7 +52,7 @@ Configure `local.settings.json`:
     "FUNCTIONS_WORKER_RUNTIME": "python",
     "AzureWebJobsStorage": "<connection-string>",
     "AZURE_STORAGE_CONNECTION_STRING": "<connection-string>",
-    "AZURE_STORAGE_ACCOUNT_URL": "https://st43mspjkjywpoqdata.blob.core.windows.net",
+    "AZURE_STORAGE_ACCOUNT_URL": "https://<your-storage-account>.blob.core.windows.net",
     "AZURE_TENANT_ID": "<tenant-id>",
     "AZURE_CLIENT_ID": "<backend-client-id>"
   }
@@ -180,11 +180,11 @@ Each API capability is a separate `func.Blueprint()` in its own package:
 
 | Resource | Name | Purpose |
 |---|---|---|
-| Storage Account | `st43mspjkjywpoqdata` | bronze, gold, ui-metadata containers |
-| Function App (pipeline) | `func-processing-43mspjkjywpoq` | Durable Functions AI tagging pipeline |
-| Resource Group | `rg-rg-datahub-genai` | All resources |
-| AI Foundry | `aif-43mspjkjywpoq` | Azure OpenAI endpoint |
-| App Configuration | `appconfig-43mspjkjywpoq` | Feature flags and settings |
+| Storage Account | `<your-storage-account>` | bronze, gold, ui-metadata containers |
+| Function App (pipeline) | `<your-processing-function-app>` | Durable Functions AI tagging pipeline |
+| Resource Group | `<your-resource-group>` | All resources |
+| AI Foundry | `<your-ai-foundry-resource>` | Azure OpenAI endpoint |
+| App Configuration | `<your-app-configuration>` | Feature flags and settings |
 
 ---
 
