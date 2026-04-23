@@ -1,4 +1,4 @@
-# Data Hub UI Starter Kit (Phase 1 PoC)
+# Starter Kit UI (Phase 1 PoC)
 
 A web application starter for uploading images and viewing AI-generated tags. Users sign in with organization-managed credentials (Entra ID), upload JPG/PNG images, and receive AI-generated metadata powered by Azure OpenAI.
 
@@ -126,9 +126,9 @@ scripts/
 - Python 3.13+
 - Node.js 18+
 - An Azure subscription with:
-  - Storage account (`st43mspjkjywpoqdata`) with `bronze`, `gold`, and `ui-metadata` containers
+  - A storage account with `bronze`, `gold`, and `ui-metadata` containers
   - Entra ID app registration for both frontend (SPA) and backend (API)
-  - The existing Durable Functions pipeline deployed (`func-processing-43mspjkjywpoq`)
+  - An existing Durable Functions pipeline for image processing
 
 ## Getting Started
 
@@ -191,13 +191,13 @@ The app opens at `http://localhost:3000`.
 
 ## Key Azure Resources
 
-| Resource | Name |
+| Resource | Example |
 |---|---|
-| Storage Account | `st43mspjkjywpoqdata` |
-| Function App | `func-processing-43mspjkjywpoq` |
-| Resource Group | `rg-rg-datahub-genai` |
-| AI Foundry | `aif-43mspjkjywpoq` |
-| App Configuration | `appconfig-43mspjkjywpoq` |
+| Storage Account | `<your-storage-account>` |
+| Function App | `<your-processing-function-app>` |
+| Resource Group | `<your-resource-group>` |
+| AI Foundry | `<your-ai-foundry-resource>` |
+| App Configuration | `<your-app-configuration-resource>` |
 
 ## Phase 1 Scope
 

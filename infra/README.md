@@ -1,6 +1,6 @@
-# Infrastructure Deployment Guide — Data Hub UI (Phase 1)
+# Infrastructure Deployment Guide — Starter Kit UI (Phase 1)
 
-This directory contains [Azure Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/) templates that provision all Azure resources required for the Data Hub UI Phase 1 deployment.
+This directory contains [Azure Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/) templates that provision all Azure resources required for the Starter Kit UI Phase 1 deployment.
 
 ---
 
@@ -64,7 +64,7 @@ You need **two** app registrations in Microsoft Entra ID:
 
 | Setting | Value |
 |---|---|
-| Name | `DataHub UI API` (or your choice) |
+| Name | `Starter Kit UI API` (or your choice) |
 | Supported account types | Single tenant |
 | Expose an API → Application ID URI | `api://<client-id>` |
 | Expose an API → Add scope | `access_as_user` |
@@ -76,7 +76,7 @@ Record the **Application (client) ID** — this is the `apiClientId` parameter.
 
 | Setting | Value |
 |---|---|
-| Name | `DataHub UI SPA` (or your choice) |
+| Name | `Starter Kit UI SPA` (or your choice) |
 | Supported account types | Single tenant |
 | Platform | Single-page application |
 | Redirect URIs | `https://<your-swa-hostname>` (add after deploy) |
@@ -100,7 +100,7 @@ az account set --subscription "<YOUR_SUBSCRIPTION_ID>"
 ### Step 2: Create the Resource Group (if it doesn't exist)
 
 ```powershell
-az group create --name rg-datahub-ui --location westus2
+az group create --name <your-resource-group> --location <your-region>
 ```
 
 ### Step 3: Configure Parameters
@@ -131,7 +131,7 @@ param staticWebAppSku = 'Free'
 
 ```powershell
 az deployment group what-if `
-  --resource-group rg-datahub-ui `
+  --resource-group <your-resource-group> `
   --template-file infra/main.bicep `
   --parameters infra/main.bicepparam
 ```
@@ -142,10 +142,10 @@ Review the output to confirm expected resource creation. No changes are made.
 
 ```powershell
 az deployment group create `
-  --resource-group rg-datahub-ui `
+  --resource-group <your-resource-group> `
   --template-file infra/main.bicep `
   --parameters infra/main.bicepparam `
-  --name datahub-phase1-$(Get-Date -Format 'yyyyMMdd-HHmmss')
+  --name starter-kit-phase1-$(Get-Date -Format 'yyyyMMdd-HHmmss')
 ```
 
 Deployment takes approximately 2–5 minutes.
@@ -154,7 +154,7 @@ Deployment takes approximately 2–5 minutes.
 
 ```powershell
 az deployment group show `
-  --resource-group rg-datahub-ui `
+  --resource-group <your-resource-group> `
   --name <deployment-name> `
   --query properties.outputs
 ```
@@ -225,7 +225,7 @@ The Bicep template configures CORS for `*.azurestaticapps.net`. If you need addi
 
 ```powershell
 az functionapp cors add `
-  --resource-group rg-datahub-ui `
+  --resource-group <your-resource-group> `
   --name <functionAppName> `
   --allowed-origins "https://your-custom-domain.com"
 ```
