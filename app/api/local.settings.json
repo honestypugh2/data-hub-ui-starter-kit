@@ -1,0 +1,21 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AZURE_STORAGE_ACCOUNT_URL": "",
+    "AZURE_STORAGE_CONNECTION_STRING": "",
+    "AZURE_TENANT_ID": "",
+    "AZURE_CLIENT_ID": "",
+    "AZURE_AUTHORITY": "",
+    "BRONZE_CONTAINER": "bronze",
+    "GOLD_CONTAINER": "gold",
+    "METADATA_CONTAINER": "ui-metadata",
+    "MAX_UPLOAD_SIZE_MB": "20",
+    "ALLOWED_EXTENSIONS": "jpg,jpeg,png"
+  },
+  "Host": {
+    "CORS": "http://localhost:3000",
+    "CORSCredentials": true
+  }
+}
