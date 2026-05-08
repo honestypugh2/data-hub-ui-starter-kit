@@ -207,16 +207,16 @@ No secrets are committed to source control. The `.gitignore` excludes `local.set
 
 | # | Risk | Mitigation |
 |---|---|---|
-| A01 Broken Access Control | JWT validation on every endpoint; agency-scoped metadata; blob-scoped SAS | 
-| A02 Cryptographic Failures | TLS 1.2+; tokens in sessionStorage (not localStorage); user delegation keys | 
-| A03 Injection | Filename sanitization (regex whitelist); no SQL/NoSQL; JSON blob storage | 
-| A04 Insecure Design | Two-step SAS upload (API never handles file bytes); least-privilege SAS permissions | 
-| A05 Security Misconfiguration | Private containers; no anonymous access; managed identity; private endpoints | 
-| A06 Vulnerable Components | Vite build with 0 npm vulnerabilities; MSAL v5; no legacy CRA dependencies | 
-| A07 Auth Failures | Entra ID with MFA; RS256 JWT with audience/issuer checks; OIDC key rotation via discovery | 
-| A08 Data Integrity Failures | SAS URLs are blob-scoped and time-limited; upload metadata created server-side | 
-| A09 Logging & Monitoring | Python `logging` module; Azure Functions host logging; Application Insights (infra) | 
-| A10 SSRF | API does not make requests based on user-supplied URLs; OIDC endpoint is hardcoded to Entra ID | 
+| A01 | Broken Access Control | JWT validation on every endpoint; agency-scoped metadata; blob-scoped SAS |
+| A02 | Cryptographic Failures | TLS 1.2+; tokens in sessionStorage (not localStorage); user delegation keys |
+| A03 | Injection | Filename sanitization (regex whitelist); no SQL/NoSQL; JSON blob storage |
+| A04 | Insecure Design | Two-step SAS upload (API never handles file bytes); least-privilege SAS permissions |
+| A05 | Security Misconfiguration | Private containers; no anonymous access; managed identity; private endpoints |
+| A06 | Vulnerable Components | Vite build with 0 npm vulnerabilities; MSAL v5; no legacy CRA dependencies |
+| A07 | Auth Failures | Entra ID with MFA; RS256 JWT with audience/issuer checks; OIDC key rotation via discovery |
+| A08 | Data Integrity Failures | SAS URLs are blob-scoped and time-limited; upload metadata created server-side |
+| A09 | Logging & Monitoring | Python `logging` module; Azure Functions host logging; Application Insights (infra) |
+| A10 | SSRF | API does not make requests based on user-supplied URLs; OIDC endpoint is hardcoded to Entra ID | 
 
 ---
 
