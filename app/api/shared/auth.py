@@ -96,21 +96,54 @@ async def validate_token(req: func.HttpRequest) -> tuple[Optional[CurrentUser], 
         rsa_key = _find_rsa_key(token, jwks)
 
         if rsa_key is None:
+            logger.warning("No matching signing key for token.")
             return None, _error_response(401, "Unable to find appropriate signing key.")
 
         payload = jwt.decode(
             token,
             rsa_key,
             algorithms=["RS256"],
-            audience=CLIENT_ID,
-            issuer=f"{AUTHORITY}/v2.0",
+            options={"verify_aud": False, "verify_iss": False},
         )
+
+        # Manual audience check (python-jose doesn't support list)
+        token_aud = payload.get("aud", "")
+        valid_audiences = {CLIENT_ID, f"api://{CLIENT_ID}"}
+        if token_aud not in valid_audiences:
+            logger.warning("Audience mismatch.")
+            return None, _error_response(401, "Invalid or expired token.")
+
+        # Manual issuer check (accept both v1 and v2 formats)
+        token_iss = payload.get("iss", "")
+        valid_issuers = {
+            f"{AUTHORITY}/v2.0",
+            f"https://sts.windows.net/{TENANT_ID}/",
+            f"https://login.microsoftonline.com/{TENANT_ID}/v2.0",
+        }
+        if token_iss not in valid_issuers:
+            logger.warning("Issuer mismatch.")
+            return None, _error_response(401, "Invalid or expired token.")
 
         return CurrentUser(payload), None
 
     except JWTError as e:
         logger.warning("JWT validation failed: %s", e)
         return None, _error_response(401, "Invalid or expired token.")
+
+        # --- DIAGNOSTIC LOGGING (uncomment for debugging auth issues) ---
+        # Decodes the token WITHOUT verification to inspect claims.
+        # DO NOT enable in production — exposes token claims in logs.
+        #
+        # unverified = jwt.get_unverified_claims(token)
+        # token_aud = unverified.get("aud")
+        # token_iss = unverified.get("iss")
+        # expected_aud = [CLIENT_ID, f"api://{CLIENT_ID}"]
+        # expected_iss = f"{AUTHORITY}/v2.0"
+        # logger.info(
+        #     "JWT debug — token aud=%s, iss=%s | expected aud=%s, iss=%s",
+        #     token_aud, token_iss, expected_aud, expected_iss,
+        # )
+        # --- END DIAGNOSTIC LOGGING ---
 
     except httpx.HTTPError as e:
         logger.error("Failed to fetch OIDC keys: %s", e)

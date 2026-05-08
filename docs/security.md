@@ -28,12 +28,14 @@ The starter kit UI handles organization user credentials and image data. The sec
 | Library | `python-jose` |
 | Algorithm | RS256 |
 | Key source | OIDC discovery (`/.well-known/openid-configuration` → `jwks_uri`) |
-| Validated claims | `aud` (must match backend client ID), `iss` (must match authority/v2.0) |
+| Validated claims | `aud` (must match backend client ID or `api://{client-id}`), `iss` (accepts both v1 `sts.windows.net` and v2 `login.microsoftonline.com` formats) |
 | Key caching | JWKS response cached in-process after first fetch |
 
 Implementation: [app/api/shared/auth.py](../app/api/shared/auth.py)
 
-Every endpoint calls `validate_token(req)` before any business logic. Failure returns `401` or `503` (if OIDC keys unreachable).
+Every endpoint calls `validate_token(req)` before any business logic. Failure returns a generic `401` with `"Invalid or expired token."` — error responses do not expose token claims, audience values, or issuer details.
+
+> **Diagnostic logging:** `auth.py` contains a commented-out diagnostic block that logs token `aud` and `iss` claims for debugging. This must remain commented out in production to avoid exposing sensitive token data in logs. See [Getting Started → Debugging 401 Errors](getting-started.md#debugging-401-errors) for usage instructions.
 
 ### Agency Isolation
 
@@ -56,6 +58,41 @@ This prevents cross-agency data access without explicit RBAC roles.
 | Azure Functions → Entra ID (OIDC keys) | HTTPS |
 
 No HTTP (plaintext) traffic is permitted in the deployed environment.
+
+---
+
+## CORS Configuration
+
+### Local Development
+
+The Function App's `local.settings.json` includes a `Host.CORS` setting for local development:
+
+```json
+"Host": {
+  "CORS": "http://localhost:3000"
+}
+```
+
+This allows the Vite dev server (port 3000) to call the Function App (port 7071) across origins.
+
+**`CORSCredentials` is not used.** The app authenticates with Bearer tokens in the `Authorization` header, not cookies. `Access-Control-Allow-Credentials` is only needed for cookie-based authentication.
+
+### Production (Static Web App + Linked Function App)
+
+When the Function App is linked to the Static Web App, all `/api/*` requests are proxied through the SWA — making them same-origin. No CORS headers are needed.
+
+If the Function App is **not** linked (standalone), add the SWA origin explicitly:
+
+```powershell
+az functionapp cors add `
+  --resource-group <rg> `
+  --name <functionAppName> `
+  --allowed-origins "https://<your-swa>.azurestaticapps.net"
+```
+
+### Static Web App Auth vs. MSAL
+
+The `staticwebapp.config.json` routes `/api/*` with `allowedRoles: ["anonymous", "authenticated"]`. This lets SWA pass requests through without interference. **Auth enforcement happens in the Function App** via `shared/auth.py` — not at the SWA layer. Do not add `responseOverrides` that redirect 401s, as this breaks `fetch()` calls (the redirect to `login.microsoftonline.com` lacks CORS headers).
 
 ---
 

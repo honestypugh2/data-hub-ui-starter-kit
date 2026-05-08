@@ -96,15 +96,9 @@ This file lives in `app/frontend/public/` (copied to `build/` during Vite build)
   "routes": [
     {
       "route": "/api/*",
-      "allowedRoles": ["authenticated"]
+      "allowedRoles": ["anonymous", "authenticated"]
     }
   ],
-  "responseOverrides": {
-    "401": {
-      "statusCode": 302,
-      "redirect": "/.auth/login/aad"
-    }
-  },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
@@ -115,9 +109,10 @@ This file lives in `app/frontend/public/` (copied to `build/` during Vite build)
 ```
 
 - **`navigationFallback`** — Rewrites all non-asset, non-API routes to `index.html` so React Router works with client-side navigation.
-- **`routes`** — Requires the `authenticated` role for any `/api/*` call, enforced at the SWA edge before the request reaches Azure Functions.
-- **`responseOverrides`** — 401 responses redirect to the built-in Entra ID login flow (`/.auth/login/aad`), providing a double layer of auth alongside MSAL.
+- **`routes`** — Allows both anonymous and authenticated roles for `/api/*` so requests pass through to the Function App, which validates JWT tokens in its own auth middleware (`shared/auth.py`).
 - **`globalHeaders`** — Security headers applied to every response (OWASP recommended).
+
+> **Note:** Do not add `responseOverrides` that redirect 401s to `/.auth/login/aad`. This breaks `fetch()` calls — the redirect to the identity provider lacks CORS headers. Auth is handled by MSAL in the SPA and validated by the Function App.
 
 ##### CI/CD Deployment Options
 
@@ -428,6 +423,136 @@ Key controls:
 ---
 
 ## Prerequisites
+
+### Development Environment Setup (Windows / VS Code)
+
+This section covers installing the tools needed to deploy and manage Azure resources from VS Code's PowerShell terminal.
+
+#### Required CLI Tools
+
+| Tool | Version | Install Command | Verify |
+|---|---|---|---|
+| **Azure CLI** | 2.60+ | `winget install Microsoft.AzureCLI` | `az --version` |
+| **Azure Functions Core Tools** | v4 | `winget install Microsoft.Azure.FunctionsCoreTools` | `func --version` |
+| **Python** | 3.13+ | [python.org](https://www.python.org/downloads/) | `python --version` |
+| **Node.js** | 18+ | [nodejs.org](https://nodejs.org/) | `node --version` |
+
+> **Important:** After installing Azure CLI or Functions Core Tools, **close and reopen VS Code** so the commands are available on your PATH.
+
+##### Alternative installation methods
+
+```powershell
+# Azure Functions Core Tools via npm (if winget is unavailable)
+npm install -g azure-functions-core-tools@4
+
+# Azure CLI via MSI installer
+# Download from: https://learn.microsoft.com/cli/azure/install-azure-cli-windows
+```
+
+##### PATH troubleshooting
+
+| Issue | Fix |
+|---|---|
+| `az: The term 'az' is not recognized` | Restart VS Code, or add `C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin` to your PATH |
+| `func: The term 'func' is not recognized` | Restart VS Code, or add `C:\Program Files\Microsoft\Azure Functions Core Tools` to your PATH |
+
+#### Recommended VS Code Extensions
+
+| Extension | Extension ID | Purpose |
+|---|---|---|
+| Azure Functions | `ms-azuretools.vscode-azurefunctions` | Deploy, manage, and debug Function Apps |
+| Azure Resources | `ms-azuretools.vscode-azureresourcegroups` | Browse Azure resources in the sidebar |
+| Azure Account | `ms-vscode.azure-account` | Sign in to Azure from VS Code |
+
+Install from the Extensions panel (`Ctrl+Shift+X`) or via command line:
+
+```powershell
+code --install-extension ms-azuretools.vscode-azurefunctions
+code --install-extension ms-azuretools.vscode-azureresourcegroups
+```
+
+#### Azure CLI Authentication
+
+```powershell
+# Sign in to Azure (opens browser)
+az login
+
+# If browser login is blocked by policy, use device code flow
+az login --use-device-code
+
+# Set your target subscription
+az account set --subscription "<YOUR_SUBSCRIPTION_ID>"
+
+# Verify
+az account show --query "{name:name, id:id}" -o table
+```
+
+#### Configure Function App Environment Variables
+
+The deployed Function App requires several app settings that are **not** provisioned by the Bicep template. Set them after deployment:
+
+```powershell
+az functionapp config appsettings set `
+  --resource-group <YOUR_RESOURCE_GROUP> `
+  --name <YOUR_FUNCTION_APP_NAME> `
+  --settings `
+    "AZURE_CLIENT_ID=<YOUR_BACKEND_API_CLIENT_ID>" `
+    "AZURE_TENANT_ID=<YOUR_ENTRA_TENANT_ID>" `
+    "AZURE_STORAGE_ACCOUNT_URL=https://<YOUR_STORAGE_ACCOUNT>.blob.core.windows.net"
+```
+
+| Setting | Value | Where to Find It |
+|---|---|---|
+| `AZURE_CLIENT_ID` | Backend API app registration client ID | Azure Portal → Entra ID → App registrations → your backend app → Application (client) ID |
+| `AZURE_TENANT_ID` | Entra ID tenant ID | Azure Portal → Entra ID → Overview → Tenant ID |
+| `AZURE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | Azure Portal → Storage account → Endpoints → Blob service |
+
+Verify the settings:
+
+```powershell
+az functionapp config appsettings list `
+  --resource-group <YOUR_RESOURCE_GROUP> `
+  --name <YOUR_FUNCTION_APP_NAME> `
+  --query "[?name=='AZURE_CLIENT_ID' || name=='AZURE_TENANT_ID' || name=='AZURE_STORAGE_ACCOUNT_URL'].{name:name,value:value}" `
+  -o table
+```
+
+After updating settings, restart the Function App:
+
+```powershell
+az functionapp restart `
+  --resource-group <YOUR_RESOURCE_GROUP> `
+  --name <YOUR_FUNCTION_APP_NAME>
+```
+
+#### Deploy Function App Code
+
+```powershell
+cd app\api
+func azure functionapp publish <YOUR_FUNCTION_APP_NAME>
+```
+
+#### View Function App Logs
+
+```powershell
+# Real-time log stream
+az webapp log tail `
+  --resource-group <YOUR_RESOURCE_GROUP> `
+  --name <YOUR_FUNCTION_APP_NAME>
+```
+
+Or in the Azure Portal: Function App → **Monitor** → **Log stream**.
+
+For Application Insights queries (if deployed with monitoring):
+
+```kql
+traces
+| where message contains "JWT debug"
+| order by timestamp desc
+| take 10
+```
+
+---
 
 ### Local Development Tools
 
@@ -842,12 +967,41 @@ npx @azure/static-web-apps-cli deploy ./build --deployment-token $token
 | Symptom | Cause | Fix |
 |---|---|---|
 | Sign-in popup closes without authenticating | Redirect URI mismatch | Verify `VITE_AZURE_REDIRECT_URI` matches the redirect URI in the SPA app registration. |
-| 401 on all API calls | JWT validation failure | Check `AZURE_TENANT_ID` and `AZURE_CLIENT_ID` in Function App settings match the backend app registration. |
+| 401 on all API calls | JWT validation failure | Check `AZURE_TENANT_ID` and `AZURE_CLIENT_ID` in Function App settings match the backend app registration. See [Debugging 401 Errors](#debugging-401-errors) below. |
+| CORS error: `No 'Access-Control-Allow-Origin' header` | SWA auth redirect or missing CORS origin | Ensure `staticwebapp.config.json` uses `allowedRoles: ["anonymous", "authenticated"]` with no `responseOverrides`. If the Function App is not linked to the SWA, add the SWA origin to Function App CORS. |
+| `Invalid audience` in 401 response | `AZURE_CLIENT_ID` not set on Function App | Set the app setting to your backend API app registration client ID. |
+| `Invalid issuer` in 401 response | Token issuer format mismatch | The code accepts both v1 (`sts.windows.net`) and v2 (`login.microsoftonline.com`) formats. Verify `AZURE_TENANT_ID` is set correctly. |
 | SAS URL returns 403 on upload | Missing RBAC role | Assign **Storage Blob Delegator** to the Function App managed identity on the storage account. |
 | Image stays "Pending" indefinitely | Processing pipeline not triggered | Check the Durable Functions app log stream. Confirm `AOAI_MULTI_MODAL` is `true` in App Configuration. |
-| CORS error in browser console | Missing allowed origin | Add the frontend origin to Function App CORS settings (Azure Portal → Function App → CORS). |
 | `func start` fails locally | Missing dependencies or wrong Python | Run `pip install -r requirements.txt` and verify `python --version` is 3.13+. |
 | Frontend shows blank page | Missing env vars | Ensure `.env` exists with all `VITE_` variables. Restart `npm start` after changes. |
+
+### Debugging 401 Errors
+
+The JWT validation code in `app/api/shared/auth.py` includes commented-out diagnostic logging. To enable it temporarily for debugging:
+
+1. Open `app/api/shared/auth.py`
+2. Find the section marked `--- DIAGNOSTIC LOGGING ---` near the bottom of `validate_token()`
+3. Uncomment the block to log the token's actual `aud` and `iss` values vs. expected values
+4. Redeploy the Function App: `func azure functionapp publish <your-function-app-name>`
+5. Reproduce the error, then check Application Insights for `JWT debug` trace messages:
+
+```kql
+traces
+| where message contains "JWT debug"
+| order by timestamp desc
+| take 10
+```
+
+> **Warning:** The diagnostic logging exposes token claims in logs. **Re-comment the block and redeploy after debugging.**
+
+Common mismatches found via diagnostic logging:
+
+| Log Shows | Meaning | Fix |
+|---|---|---|
+| `expected aud=['', 'api://']` | `AZURE_CLIENT_ID` is empty | Set the app setting on the Function App |
+| `token iss=https://sts.windows.net/...` vs `expected iss=.../v2.0` | v1 vs v2 issuer format | Already handled in code — verify `AZURE_TENANT_ID` is correct |
+| `token aud=api://xxxx` vs `expected aud=['yyyy', 'api://yyyy']` | Client ID mismatch | `AZURE_CLIENT_ID` must match the backend API app registration, not the frontend SPA |
 
 ---
 
