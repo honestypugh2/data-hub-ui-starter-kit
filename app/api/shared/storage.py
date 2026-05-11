@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, ContentSettings
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def upload_blob(container_name: str, blob_name: str, data: bytes, content_type: 
     blob.upload_blob(
         data,
         overwrite=True,
-        content_settings={"content_type": content_type},
+        content_settings=ContentSettings(content_type=content_type),
     )
     return blob.url
 

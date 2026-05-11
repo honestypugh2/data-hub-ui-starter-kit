@@ -7,6 +7,7 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import (
     BlobSasPermissions,
     BlobServiceClient,
+    ContentSettings,
     UserDelegationKey,
     generate_blob_sas,
 )
@@ -53,7 +54,7 @@ def upload_blob(container_name: str, blob_name: str, data: bytes, content_type: 
     blob.upload_blob(
         data,
         overwrite=True,
-        content_settings={"content_type": content_type},
+        content_settings=ContentSettings(content_type=content_type),
     )
     return blob.url
 
@@ -100,12 +101,15 @@ def generate_read_sas_url(container_name: str, blob_name: str, expiry_minutes: i
 
     # Use user delegation key if using managed identity, otherwise account key
     try:
+        account_name = client.account_name
+        if not account_name:
+            return blob.url
         delegation_key: UserDelegationKey = client.get_user_delegation_key(
             key_start_time=datetime.now(timezone.utc),
             key_expiry_time=datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes),
         )
         sas_token = generate_blob_sas(
-            account_name=client.account_name,
+            account_name=account_name,
             container_name=container_name,
             blob_name=blob_name,
             user_delegation_key=delegation_key,

@@ -70,13 +70,20 @@ async def upload_image(
     blob_name = f"{upload_id}_{safe_filename}"
 
     # Upload to bronze container (triggers the existing pipeline)
-    ensure_container_exists(settings.bronze_container)
-    blob_url = upload_blob(
-        settings.bronze_container,
-        blob_name,
-        content,
-        file.content_type,
-    )
+    try:
+        ensure_container_exists(settings.bronze_container)
+        blob_url = upload_blob(
+            settings.bronze_container,
+            blob_name,
+            content,
+            file.content_type,
+        )
+    except Exception as exc:
+        logger.exception("Storage upload failed for blob %s", blob_name)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Storage upload failed: {exc}",
+        )
 
     # Create metadata record for tracking
     metadata = create_metadata(
