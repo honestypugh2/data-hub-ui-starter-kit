@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timezone
 from typing import Optional
 
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.storage.blob import BlobServiceClient, ContentSettings
 
 logger = logging.getLogger(__name__)
@@ -23,8 +23,18 @@ ALLOWED_EXTENSIONS = os.environ.get("ALLOWED_EXTENSIONS", "jpg,jpeg,png")
 def _get_blob_service_client() -> BlobServiceClient:
     """Create a BlobServiceClient using connection string or managed identity."""
     if STORAGE_CONNECTION_STRING:
+        logger.info("Using connection string for storage authentication.")
         return BlobServiceClient.from_connection_string(STORAGE_CONNECTION_STRING)
-    credential = DefaultAzureCredential()
+    if not STORAGE_ACCOUNT_URL:
+        raise ValueError(
+            "Storage not configured: set AZURE_STORAGE_CONNECTION_STRING or "
+            "AZURE_STORAGE_ACCOUNT_URL in the Function App application settings."
+        )
+    # Use ManagedIdentityCredential directly to avoid AZURE_CLIENT_ID conflict.
+    # AZURE_CLIENT_ID is set for JWT validation (Entra app registration) but
+    # DefaultAzureCredential misinterprets it as an EnvironmentCredential config.
+    credential = ManagedIdentityCredential()
+    logger.info("Using ManagedIdentityCredential for storage account: %s", STORAGE_ACCOUNT_URL)
     return BlobServiceClient(account_url=STORAGE_ACCOUNT_URL, credential=credential)
 
 

@@ -3,7 +3,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.storage.blob import (
     BlobSasPermissions,
     BlobServiceClient,
@@ -23,7 +23,10 @@ def _get_blob_service_client() -> BlobServiceClient:
         return BlobServiceClient.from_connection_string(
             settings.azure_storage_connection_string
         )
-    credential = DefaultAzureCredential()
+    # Use ManagedIdentityCredential directly to avoid AZURE_CLIENT_ID conflict.
+    # AZURE_CLIENT_ID is set for JWT validation (Entra app registration) but
+    # DefaultAzureCredential misinterprets it as an EnvironmentCredential config.
+    credential = ManagedIdentityCredential()
     return BlobServiceClient(
         account_url=settings.azure_storage_account_url, credential=credential
     )
